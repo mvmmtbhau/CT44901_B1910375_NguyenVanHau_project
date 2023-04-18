@@ -1,40 +1,41 @@
 const jwt = require("jsonwebtoken");
-const UserModel = require("../models/user.model");
+const {User} = require("../models/");
 
-const isAuthentication = (req, res, next) => {
-  try {
-    const bearerHeader = req.headers["authorization"];
-    const access_token = bearerHeader.split(" ")[1];
-    // console.log(access_token);
-    const decodeJwt = jwt.verify(
-      access_token,
-      process.env.SECRET_JWT
-    );
-    // console.log(decodeJwt);
-    // console.log("check auth");
-    req.userId = decodeJwt._id; //gán id cho req sau
-    next();
-  } catch (e) {
-    if (e instanceof jwt.TokenExpiredError) {
-      console.log("token het han");
-      return res.status(401).send("Token expired");
-    }
+// const isAuthentication = (req, res, next) => {
+//   try {
+//     console.log(req.headers['authorrization']);
 
-    return res.status(401).send("Authentication not valid");
-  }
-};
+//     const bearerHeader = req.headers["authorization"];
+//     const access_token = bearerHeader.split(" ")[1];
+    
+//     // const decodeJwt = jwt.verify(
+//     //   access_token,
+//     //   process.env.SECRET_JWT
+//     // );
+
+//     // req.userId = decodeJwt._id; //gán id cho req sau
+//     // next();
+//   } catch (e) {
+//     if (e instanceof jwt.TokenExpiredError) {
+//       console.log("token het han");
+//       return res.status(401).send("Token expired");
+//     }
+
+//     return res.status(401).send("Authentication not valid");
+//   }
+// };
 
 const isAdmin = async (req, res, next) => {
   try {
-    const userId = req.userId;
-    const user = await UserModel.findByPk(userId);
-    if (+user?.role == "admin") {
-      console.log("check admin");
+    const userId = req.params.id;
+    const user = await User.findById(userId);
+    if (user?.role == "admin") {
+      console.log("Là admin, mời vào!");
       next();
     } else {
-      console.log("token khong phai admin");
+      console.log("Không phải admin, đi chỗ khác chơi.");
 
-      return res.status(401).send("Authentication not admin ne");
+      return res.status(403).send("Không phải tài khoản admin, xin dùng tài khoản khác.");
     }
   } catch (e) {
     console.log("loi check admin");
@@ -43,6 +44,5 @@ const isAdmin = async (req, res, next) => {
 };
 
 module.exports = {
-  isAuthentication: isAuthentication,
   isAdmin: isAdmin,
 };

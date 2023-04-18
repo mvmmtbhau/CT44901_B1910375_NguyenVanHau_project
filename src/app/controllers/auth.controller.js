@@ -1,63 +1,69 @@
 const authService = require('../services/auth.service');
-const ApiError = require('../api-error');
+
+const bcrypt = require('bcrypt');
+const jwt = require("jsonwebtoken");
 
 class AuthController {
-    async getAll(req, res, next) {
-        let documents = []
-        try {
-            documents = await authService.getAllUser({})
-        } catch (err) {
-            console.log(err);
-            return next(
-                new ApiError(500, err)
-            )
-        };
-        return res.send(documents);
-    }
-
-    async getUserById(req, res, next){
-        try {
-            const user = await authService.getUserById(req, res, next);
-        } catch (err) {
-            return next(
-                new ApiError(500, err)
-            )
-        }
-    }
-
-    async updateAccount(req, res, next){
-        try {
-            const user = await authService.update(req, res, next);
-        } catch (err) {
-            return next(
-                new ApiError(500, err)
-            )
-        }
-    }
-
-    async changePassword(req, res, next) {
-        const response = await authService.changePassword(req, res, next);
-    }
-
-    async changePrivateState(req, res, next) {
-        const response = await authService.changePrivateState(req, res, next);
-    }
-
     async login(req, res, next) {
         try {
-            return await authService.login(req, res, next);
+            const isExisted = await authService.find({
+                username: req.body.username,
+            });
+
+            if (isExisted == '') return res.status(302).json({
+                message: 'Tài khoản không đúng, xin nhập lại.'
+            });
+
+            const checkPassword = bcrypt.compareSync(req.body.password, isExisted[0].password);
+
+            if (!checkPassword) return res.status(302).json({
+                message: 'Mật khẩu không đúng, xin nhập lại'
+            });
+
+            const jwtToken = jwt.sign({...isExisted}, process.env.SECRET_JWT, {
+                expiresIn: (3600 * 2),
+            });
+
+            return res.status(200).json({
+                message: 'Đăng nhập thành công',
+                accessToken: jwtToken
+            });
+
         } catch (err) {
             console.log(err);
-            return next(new ApiError(500,err));
         }
     }
 
-    async signUp(req, res, next) {
+    async register(req, res, next) {
         try {
-            const signUp = await authService.register(req, res,next);
+            const isExisted = await authService.find({
+                username: req.body.username
+            });
+
+            if (isExisted != '') return res.status(302).send('Tài khoản đã tồn tại, xin đổi tên tài khoản khác');
+
+            const newUser = await authService.register(req.body);
+
+            return res.status(201).send(
+                {
+                    newUser,
+                    message: 'Tạo tài khoản thành công'
+                }
+            )
         } catch (err) {
             console.log(err);
-            return next(new ApiError(500, err));
+        }
+    }
+
+    async getUser(req, res, next) {
+        try {
+            const user = await authService.find({
+                _id: req.params.id
+            });
+
+            return res.status(200).json(...user);
+        } catch (err) {
+            console.log(err);
         }
     }
 }

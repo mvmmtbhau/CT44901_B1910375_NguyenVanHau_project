@@ -1,79 +1,46 @@
-const { User, Search, Notification } = require('../models/');
+const { User } = require('../models/');
 const bcrypt = require('bcrypt');
 const jwt = require("jsonwebtoken");
 
 class AuthService {
-    async register(req, res, next) {
-        try {
-            const filterUser = await User.findOne({
-                userName: req.body.userName,
-            });
+    async register(data) {
+        const saltRounds = 10;
+        const salt = bcrypt.genSaltSync(saltRounds);
+        const hash = bcrypt.hashSync(data.password, salt);
 
-            if (filterUser) {
-                return res.status(400).json({ message: "Tên đăng nhập đã tồn tại" });
-            }
+        const user = new User({
+            fullname: data.fullName,
+            username: data.username,
+            password: hash,
+            role: data.role ? data.role : 'user',
+        });
 
-            const saltRounds = 10;
-            const salt = bcrypt.genSaltSync(saltRounds);
-            const hash = bcrypt.hashSync(req.body.password, salt);
+        const newUser = user.save();
 
-            const user = new User({
-                fullName: req.body.fullName,
-                userName: req.body.userName,
-                password: hash,
-            });
-
-            const response = await user.save();
-            if (response) {
-                const newHistory = await Search.create({
-                    owner: response._id,
-                });
-                return res.status(201).json(response);
-            }
-        } catch (err) {
-            return res.status(500).send(err);
-        }
+        return newUser;
     }
 
-    async login(req, res, next) {
-        try {
-            const filterUser = await User.findOne({
-                userName: req.body.userName,
-            }).populate('posts')
-                .populate({
-                    path: 'follows',
-                    populate: {
-                        path: 'followUser',
-                        select: '-userName -password',
-                    }
-                })
-                .populate({
-                    path: 'hasFollowers',
-                    populate: {
-                        path: 'fromUser',
-                        select: '-userName -password',
-                    }
-                });
+    async find(filter) {
+        return await User.find(filter);
+    }
 
-            if (!filterUser) return res.status(400).json({ message: "Tên đăng nhập không đúng" });
+    async login(data) {
+        if (!filterUser) return res.status(400).json({ message: "Tên đăng nhập không đúng" });
 
-            const checkPassword = bcrypt.compareSync(req.body.password, filterUser.password);
+        const checkPassword = bcrypt.compareSync(req.body.password, filterUser.password);
 
-            if (!checkPassword) {
-                return res.status(400).json({ message: 'Mật khẩu sai' });
-            };
+        if (!checkPassword) {
+            return res.status(400).json({ message: 'Mật khẩu sai' });
+        };
 
-            const jwtToken = jwt.sign({ ...filterUser._doc }, process.env.SECRET_JWT, {
-                expiresIn: (3600 * 2),
-            });
+        const jwtToken = jwt.sign({ ...filterUser._doc }, process.env.SECRET_JWT, {
+            expiresIn: (3600 * 2),
+        });
 
-            return res.status(200).json({
-                message: 'Đăng nhập thành công',
-                accessToken: jwtToken
-            });
-        } catch (err) {
-            return res.status(500).json(err);
-        }
+        return res.status(200).json({
+            message: 'Đăng nhập thành công',
+            accessToken: jwtToken
+        });
     }
 
     async getUserById(req, res, next) {
@@ -98,8 +65,7 @@ class AuthService {
                         path: 'fromUser',
                         select: '-userName -password',
                     }
-                })
-                .populate('savedPosts');
+                });
 
             return res.status(200).send(user);
         } catch (err) {
@@ -248,6 +214,42 @@ class AuthService {
 
         } catch (err) {
             console.log(err);
+            return res.status(500).send(err);
+        }
+    }
+
+    async getAll(req, res, next) {
+        try {
+            const userId = req.params.id;
+
+            const user = await User.findById(userId).populate({
+                path: 'follows',
+                populate: {
+                    path: 'followUser',
+                    select: '-uesrName -password'
+                }
+            });
+
+            const newArr = [];
+            user.follows.forEach(user => {
+                newArr.push(user.followUser._id);
+            });
+
+            const users = await User.find({
+                _id: {
+                    $nin: newArr,
+                    $ne: userId,
+                }
+            }).populate({
+                path: 'follows',
+                populate: {
+                    path: 'followUser',
+                    select: '-userName -password',
+                }
+            });
+
+            return res.status(200).send(users);
+        } catch (err) {
             return res.status(500).send(err);
         }
     }

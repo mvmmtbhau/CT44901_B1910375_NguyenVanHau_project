@@ -3,11 +3,12 @@ mongoose.set('strictQuery', true);
 
 const Schema = mongoose.Schema;
 
-const UserSchema = new Schema({
-    fullname: String,
-    username: String,
-    password: String,
-    role: String,
+const RoomSchema = new Schema({
+    roomname: String,
+    price: Number,
+    quantity: Number,
+    description: String,
+    image: String,
     updatedAt: {
         type: Date,
         default: Date.now(),
@@ -16,4 +17,4 @@ const UserSchema = new Schema({
     timestamps: true,
 });
 
-module.exports = mongoose.model('User', UserSchema);
+module.exports = mongoose.model('Room', RoomSchema);
