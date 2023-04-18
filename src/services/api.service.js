@@ -31,12 +31,11 @@ instance.interceptors.response.use(
       const config = error.config;
       const response = error?.response;
       if (response.status === 401) {
-        window.location.href ="/login";
+        window.location.href='/';
         localStorage.removeItem('access_token');
         return Promise.reject(error);
       }
       if (response.status === 403) {
-        console.log("vao day admin r");
         return Promise.reject(error);
       }
       // if (

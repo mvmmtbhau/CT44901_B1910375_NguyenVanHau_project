@@ -1,22 +1,14 @@
 <template>
-  <component :is="layout">
-    <router-view></router-view>
-  </component>
+  <router-view :key="this.$route.fullPath"></router-view>
 </template>
 
 <script>
 import { useRoute, useRouter } from "vue-router";
-import { computed, onMounted, onBeforeMount } from "vue";
-import { public_layout } from "@/constants";
 import jwt_decode from "jwt-decode";
-import socket from "@/plugins/socket";
-import conversationService from "@/services/conversation.service";
-import notificationService from "@/services/notification.service";
 import { useStore } from "vuex";
 
 export default {
   setup() {
-    const route = useRoute();
     const store = useStore();
     const router = useRouter();
 
@@ -25,66 +17,27 @@ export default {
 
       if (access_token) {
         const decodedHeader = jwt_decode(access_token);
-        store.dispatch("auth/handleSetUser", decodedHeader);
+        store.dispatch("auth/handleSetUser", decodedHeader[0]);
 
-        if (store.state.auth.user) {
-          getConversations(store.state.auth.user._id);
-          getNotifications(store.state.auth.user._id);
-
-          socket.connect();
-
-          socket.emit("addUser", store.state.auth.user?._id);
-
-          socket.on("getUsers", (data) => {
-            console.log(data);
-          })
-        }
-
-        if (location.pathname == '/login' || location.pathname == '/register') {
+        if (location.pathname == '/login') {
           router.push({
             name: 'Home',
           })
         };
       }
-      
-      if (store.state.auth.user == null) {
+
+      if (!access_token || store.state.auth.user == null) {
         router.push({
           name: 'Login',
         })
       }
     }
 
-    const getConversations = async (userId) => {
-      try {
-        const response = await conversationService.getConversationsByUserId(userId);
-        if (response.status == 200) {
-          store.dispatch("auth/handleSetConversations", response.data);
-        }
-      } catch (err) {
-        console.log(err);
-      }
-    }
-
-    const getNotifications = async (userId) => {
-      try {
-        const response = await notificationService.getNotificationsByUserId(userId);
-        if (response.status == 200) {
-          store.dispatch("auth/handleSetNotifications", response.data);
-        }
-      } catch (err) {
-        console.log(err);
-      }
-    }
-
-    onBeforeMount(() => {
-      getCurrentUser();
-    })
+    getCurrentUser();
 
     return {
-      layout: computed(() => (route.meta.layout || public_layout) + '-layout'),
+
     }
-
-
   }
 }
 </script>

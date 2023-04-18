@@ -1,75 +1,69 @@
 import { createRouter, createWebHistory } from 'vue-router';
 
+import HomeView from "@/views/HomeView.vue";
+import LoginView from "@/views/LoginView.vue";
+import ListRoomView from "@/views/ListRoomView.vue";
+import RoomAddView from "@/views/RoomAddView.vue";
+import RoomEditView from "@/views/RoomEditView.vue";
+import ListStaffView from "@/views/ListStaffView.vue";
+import ListPositionView from "@/views/ListPositionView.vue";
+import StaffAddView from "@/views/StaffAddView.vue";
+import StaffEditView from "@/views/StaffEditView.vue";
+
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
       path: '/',
       name: 'Home',
-      component: () => import(/* webpackChunkName: "home" */'@/views/client/home.vue'),
-    },
-    {
-      path: '/p/:id',
-      name: 'DetailPost',
-      component: () => import(/* webpackChunkName: "detailPost" */'@/views/client/detailPost.vue'),
-    },
-    {
-      path: '/register',
-      name: 'Register',
-      meta: {
-        layout: 'auth',
-      },
-      component: () => import(/* webpackChunkName: "register" */'@/views/client/register.vue'),
-      props: true,
+      component: () => HomeView,
+      children: [
+        {
+          path: '/rooms',
+          name: 'ListRoom',
+          component: () => ListRoomView,
+          children: [
+            {
+              path: 'add',
+              name: 'AddRoom',
+              component: () => RoomAddView,
+            },
+            {
+              path: 'edit/:id',
+              name: 'EditRoom',
+              component: () => RoomEditView,
+            },
+          ]
+        },
+        {
+          path: '/staffs',
+          name: 'ListStaff',
+          component: () => ListStaffView,
+          children: [
+            {
+              path: 'add',
+              name: 'AddStaff',
+              component: () => StaffAddView,
+            },
+            {
+              path: 'edit/:id',
+              name: 'EditStaff',
+              component: () => StaffEditView,
+            },
+          ]
+        },
+        {
+          path: '/positions',
+          name: 'ListPosition',
+          component: () => ListPositionView,
+        },
+      ]
     },
     {
       path: '/login',
       name: 'Login',
-      meta: {
-        layout: 'auth',
-      },
-      component: () => import(/* webpackChunkName: "login" */'@/views/client/login.vue'),
-      props: true,
-    },
-    {
-      path: '/user/:id',
-      name: 'User',
-      component: () => import(/* webpackChunkName: "user" */'@/views/client/user.vue'),
-    },
-    {
-      path: '/inbox',
-      name: 'Inbox',
-      component: () => import(/* webpackChunkName: "inbox" */'@/views/client/inbox.vue'),
-      children: [
-        {
-          path: 't/:id',
-          name: 'ChatBox',
-          component: () => import(/* webpackChunkName: "chatBox" */'@/views/client/chat.vue'),
-        },
-      ],
-    },
-    {
-      path: '/accounts',
-      name: 'Edit',
-      component: () => import(/* webpackChunkName: "accounts" */'@/views/client/accounts.vue'),
-      children: [
-        {
-          path: 'edit',
-          name: 'EditAccount',
-          component: () => import(/* webpackChunkName: "accountEdit" */'@/views/client/editAccount.vue'),
-        },
-        {
-          path: 'change/password',
-          name: 'ChangePassword',
-          component: () => import(/* webpackChunkName: "changePassword" */'@/views/client/changePassword.vue'),
-        },
-        {
-          path: 'who_can_see_your_content',
-          name: 'WhoCanSeeYourContent',
-          component: () => import(/* webpackChunkName: "changePassword" */'@/views/client/whoCanSee.vue'),
-        },
-      ],
-    },
+      component: () => LoginView,
+    }
   ]
 })
 

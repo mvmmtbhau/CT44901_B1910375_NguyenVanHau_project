@@ -5,37 +5,16 @@ class AuthService {
         this.api = instance;
     }
 
-    async getUserById(userId) {
-        return (await this.api.get(`/auth/profile/${userId}`));  
-    }
-
-    async register(data) {
-        return (await this.api.post('/auth/register', data));   
-    }
-
     async login(data){
         return (await this.api.post('/auth/login', data));
     }
-
-    async updateAccount(data){
-        return (await this.api(
-            {
-                method: 'POST',
-                url: `/auth/update/${data.userId}`,
-                headers: {
-                    "Content-Type": "multipart/form-data",
-                },
-                data: data
-            }
-        ));
+    
+    async register(data){
+        return (await this.api.post('/auth/register', data));
     }
 
-    async changePassword(data) {
-        return (await this.api.post('/auth/change/password', data));
-    }
-
-    async changePrivateState(userId) {
-        return (await this.api.post(`/auth/change/privateState/${userId}`, ));
+    async getUser(userId) {
+        return (await this.api.get(`/auth/get/${userId}`));
     }
 }
 
